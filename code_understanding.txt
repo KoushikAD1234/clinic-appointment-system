@@ -1,0 +1,36 @@
+1. To run Postgres and Redis in Docker Container:
+    -> RUN: docker-compose up -d
+    -> docker ps : This command will show the running docker container.
+
+2. Initialize nestjs and create backend Directory and setup
+    -> npx @nestjs/cli new apps/backend
+
+3. Inside Backend directory, we have to initialize dependency:
+    -> npm install @nestjs/typeorm typeorm pg
+    -> npm install @nestjs/config
+    -> npm install @nestjs/jwt passport passport-jwt bcrypt
+    -> npm install bullmq ioredis
+
+4. To run the backend: RUN: npm run start:dev
+
+5. Create Modules: Example of creating the Auth Modules
+    -> nest g module auth
+    -> nest g controller auth
+    -> nest g service auth
+
+    Service: Includes all Business logic.
+    Controller: Includes the API calls, metadata and routing.
+
+    How they work together?
+        -> The Module bundles the Controller and Service together.
+        -> A user sends a request to a URL defined in the Controller.
+        -> The Controller calls a function in the Service.
+        -> The Service does the heavy lifting (like saving a Doctor to the DB).
+        -> The Service returns the data to the Controller, which sends it back to the user.
+
+6. ORM is the Object Relational Model, technique (and a type of library) that lets you 
+    interact with a database using the programming language you already know (like TypeScript) 
+    instead of writing raw SQL queries.
+    
+        -> entity file is responsible for ORM DB schema.
+        -> you can verify the table creation in TablePlus app.

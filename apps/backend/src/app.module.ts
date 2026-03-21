@@ -1,19 +1,27 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { validationSchema } from './config/validation.schema';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule } from '@nestjs/typeorm'; // allows your NestJS application to talk to your SQL database
 import { Doctor } from './database/entities/doctor.entity';
 import { AuthModule } from './auth/auth.module';
 
+/* NestJS uses a Module Tree structure.
+ 1. AppModule is the "Root."
+ 2. AuthModule is a "Child."
+ 3. Inside AuthModule, you might have a DoctorModule.
+
+ .forRoot() : function basically used to configuring modules for the entire application.
+ */
 @Module({
   imports: [
-    // 👇 TEMP DEBUG
     (console.log('ENV CHECK:', process.env.DB_HOST),
     ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: process.cwd() + '/.env',
-      validationSchema,
+      isGlobal: true, // Make it usable in entire application by using ConfigService.
+      envFilePath: process.cwd() + '/.env', // getting the env file.
+      validationSchema, // Safety guard: If you forgot to add DB_HOST or if DB_PORT is text
+      // instead of a number, the app will crash immediately with a clear error message.
     })),
+    // Database Connection: Configuring it for the entire Application.
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -29,8 +37,9 @@ import { AuthModule } from './auth/auth.module';
   ],
 })
 export class AppModule {
+  // Depecdency Injector: This is more specifically constructor injection.
   constructor(private configService: ConfigService) {
     console.log('ENV CHECK:', this.configService.get('DB_HOST'));
-    console.log('CWD:', process.cwd());
+    console.log('CWD:', process.cwd()); //process.cwd() used to getting the current directory you are in.
   }
 }
