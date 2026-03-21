@@ -31,6 +31,10 @@
 6. ORM is the Object Relational Model, technique (and a type of library) that lets you 
     interact with a database using the programming language you already know (like TypeScript) 
     instead of writing raw SQL queries.
-    
+
         -> entity file is responsible for ORM DB schema.
         -> you can verify the table creation in TablePlus app.
+
+7. Installing JWT packages:
+    -> npm install @nestjs/jwt passport passport-jwt
+    -> npm install -D @types/passport-jwt
