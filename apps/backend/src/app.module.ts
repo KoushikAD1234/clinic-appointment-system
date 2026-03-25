@@ -6,6 +6,8 @@ import { Doctor } from './database/entities/doctor.entity';
 import { AuthModule } from './auth/auth.module';
 import { Patient } from './database/entities/patient.entity';
 import { PatientModule } from './modules/patient/patient.module';
+import { AppointmentModule } from './modules/appointment/appointment.module';
+import { Appointment } from './database/entities/appointment.entity';
 
 /* NestJS uses a Module Tree structure.
  1. AppModule is the "Root."
@@ -32,11 +34,12 @@ import { PatientModule } from './modules/patient/patient.module';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       autoLoadEntities: true,
-      entities: [Doctor, Patient],
+      entities: [Doctor, Patient, Appointment],
       synchronize: true,
     }),
     AuthModule,
     PatientModule,
+    AppointmentModule,
   ],
 })
 export class AppModule {
