@@ -3,9 +3,10 @@ import { WhatsappController } from './whatsapp.controller';
 import { WhatsappService } from './whatsapp.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Conversation } from 'src/database/entities/conversation.entity';
+import { AppointmentModule } from '../appointment/appointment.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Conversation])],
+  imports: [TypeOrmModule.forFeature([Conversation]), AppointmentModule],
   controllers: [WhatsappController],
   providers: [WhatsappService],
 })

@@ -5,12 +5,14 @@ import {
   ConversationStep,
 } from 'src/database/entities/conversation.entity';
 import { Repository } from 'typeorm';
+import { AppointmentService } from '../appointment/appointment.service';
 
 @Injectable()
 export class WhatsappService {
   constructor(
     @InjectRepository(Conversation)
     private convoRepo: Repository<Conversation>,
+    private appointmentService: AppointmentService,
   ) {}
 
   async handleIncoming(body: any) {
@@ -54,9 +56,22 @@ export class WhatsappService {
 
       case ConversationStep.CONFIRM:
         if (message.toLowerCase() === 'yes') {
-          // TODO: call appointment service
-          await this.convoRepo.delete({ phone: from });
-          return 'Appointment booked successfully!';
+          try {
+            await this.appointmentService.create(
+              {
+                patient_id: convo.phone,
+                doctor_id: convo.doctor_id,
+                appointment_time: convo.appointment_time
+              },
+              'default-clinic',
+            );
+
+            await this.convoRepo.delete({ phone: from });
+
+            return '✅ Appointment booked successfully!';
+          } catch (error) {
+            return '❌ Slot already booked. Please try another time.';
+          }
         } else {
           await this.convoRepo.delete({ phone: from });
           return 'Booking cancelled.';
