@@ -9,6 +9,12 @@ async function bootstrap() {
   // hits your service. It keeps your database safe from "trash" data.
   app.useGlobalPipes(new ValidationPipe()); // For every single request that comes into this API,
   // run it through the ValidationPipe first
+
+  app.enableCors({
+    origin: true, // ✅ allow all origins
+    credentials: true,
+  });
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap(); // process of initializing the application
