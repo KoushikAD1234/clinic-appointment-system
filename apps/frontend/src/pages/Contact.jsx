@@ -39,29 +39,29 @@ export default function Contact() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
         {/* Left: Contact Info */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-14">
           <ContactMethod
             icon={Mail}
             label="Email Support"
-            value="support@medicare.com"
+            value="koushikjio1234@gmail.com"
             href="mailto:support@medicare.com"
           />
           <ContactMethod
             icon={Phone}
             label="Phone"
-            value="+91 98765 43210"
-            href="tel:+919876543210"
+            value="+91 9101334649"
+            href="tel:+919101334649"
           />
           <ContactMethod
             icon={Globe}
             label="Location"
-            value="Tinsukia, Assam, India"
+            value="E-City, Bengaluru"
             href="#"
           />
 
-          <div className="p-8 rounded-[2.5rem] bg-blue-600 text-white mt-8 relative overflow-hidden">
+          {/* <div className="p-8 rounded-[2.5rem] bg-blue-600 text-white mt-8 relative overflow-hidden">
             <MessageSquare className="absolute -right-4 -bottom-4 w-24 h-24 text-white/10" />
             <h3 className="font-black mb-2 uppercase tracking-widest text-sm">
               Priority Support
@@ -70,7 +70,7 @@ export default function Contact() {
               Pro users get a dedicated WhatsApp account manager for 24/7
               technical assistance.
             </p>
-          </div>
+          </div> */}
         </div>
 
         {/* Right: Query Form */}
