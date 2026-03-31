@@ -10,13 +10,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
-  Download,
 } from "lucide-react";
+import WalkInModal from "../components/WalkInModal";
 
 export default function Appointments() {
   const [activeFilter, setActiveFilter] = useState("today");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const[isWalkInOpen, setIsWalkInOpen] = useState(false);
   const itemsPerPage = 5;
 
   // Dummy Data - In production, this comes from your NestJS API
@@ -97,6 +98,21 @@ export default function Appointments() {
     );
   };
 
+  const handleAddWalkIn = (newPatient) => {
+    const newEntry = {
+      id: Date.now().toString(), // Temporary ID
+      ...newPatient,
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      status: "BOOKED",
+    };
+
+    // Update local state (in Phase 2, this will be an API call)
+    setAppointments([newEntry, ...appointments]);
+  };
+
   return (
     <div className="space-y-6">
       {/* 1. Header & Quick Actions */}
@@ -110,10 +126,13 @@ export default function Appointments() {
           </p>
         </div>
         <div className="flex gap-3">
-          <button className="p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/5 text-gray-500 hover:text-blue-600 transition-all shadow-sm">
+          {/* <button className="p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/5 text-gray-500 hover:text-blue-600 transition-all shadow-sm">
             <Download size={20} />
-          </button>
-          <button className="px-6 py-3 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all">
+          </button> */}
+          <button
+            onClick={() => setIsWalkInOpen(true)}
+            className="px-6 py-3 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all"
+          >
             + New Walk-in
           </button>
         </div>
@@ -274,6 +293,11 @@ export default function Appointments() {
           </div>
         </div>
       </div>
+      <WalkInModal
+        isOpen={isWalkInOpen}
+        onClose={() => setIsWalkInOpen(false)}
+        onSave={handleAddWalkIn}
+      />
     </div>
   );
 }
