@@ -1,34 +1,33 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import api from '../../services/api';
+import api from "../../services/api";
 import { AxiosError } from "axios";
-
 
 // REGISTER
 export const registerUser = createAsyncThunk(
-    '/auth/signup',
-    async(data, thunkAPI) => {
-        try {
-            const res = await api.post('/auth/signup', data);
-            return res.data;
-        } catch (error) {
-            console.log(error);
-            return thunkAPI.rejectWithValue(error.response.data);
-        }
+  "/auth/signup",
+  async (data, thunkAPI) => {
+    try {
+      const res = await api.post("/auth/signup", data);
+      return res.data;
+    } catch (error) {
+      console.log(error);
+      return thunkAPI.rejectWithValue(error.response.data);
     }
-)
+  }
+);
 
 // LOGIN
 export const loginUser = createAsyncThunk(
-    '/auth/login',
-    async(data, thunkAPI) => {
-        try {
-            const res = await api.post('/auth/login', data);
-            return res.data;
-        } catch(error) {
-            console.log(error);
-            return thunkAPI.rejectWithValue(error.response.data);
-        }
+  "/auth/login",
+  async (data, thunkAPI) => {
+    try {
+      const res = await api.post("/auth/login", data);
+      return res.data;
+    } catch (error) {
+      console.log(error);
+      return thunkAPI.rejectWithValue(error.response.data);
     }
+  }
 );
 
 // FORGOT PASSWORD
@@ -39,7 +38,7 @@ export const forgotPassword = createAsyncThunk(
       const res = await api.post("/auth/forgot-password", { email });
       return res.data;
     } catch (error) {
-        const err = error as AxiosError<any>;
+      const err = error as AxiosError<any>;
       return thunkAPI.rejectWithValue(
         err?.response?.data || "Something went wrong"
       );
@@ -59,7 +58,7 @@ export const resetPassword = createAsyncThunk(
       });
       return res.data;
     } catch (error) {
-        const err = error as AxiosError<any>;
+      const err = error as AxiosError<any>;
       return thunkAPI.rejectWithValue(
         err?.response?.data || "Something went wrong"
       );

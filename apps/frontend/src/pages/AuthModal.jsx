@@ -71,7 +71,13 @@ export default function AuthModal({ isOpen, onClose }) {
     console.log("Resetting password with OTP:", form.otp);
     console.log("Resetting password with OTP:", form.email);
 
-    dispatch(resetPassword({ email: form.email, otp: form.otp, newPassword: form.newPassword}))
+    dispatch(
+      resetPassword({
+        email: form.email,
+        otp: form.otp,
+        newPassword: form.newPassword,
+      })
+    );
 
     setResetSent(true);
     setTimeout(() => {
