@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle,
@@ -12,72 +12,42 @@ import {
   Filter,
 } from "lucide-react";
 import WalkInModal from "../components/WalkInModal";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchAppointments,
+  updateStatus,
+} from "../apiHandler/authApiHandler/appointmentSlice";
 
 export default function Appointments() {
   const [activeFilter, setActiveFilter] = useState("today");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const[isWalkInOpen, setIsWalkInOpen] = useState(false);
+  const [isWalkInOpen, setIsWalkInOpen] = useState(false);
   const itemsPerPage = 5;
 
-  // Dummy Data - In production, this comes from your NestJS API
-  const [appointments, setAppointments] = useState([
-    {
-      id: "101",
-      name: "Koushik Dutta",
-      phone: "+91 9876543210",
-      time: "10:30 AM",
-      status: "BOOKED",
-      type: "First Visit",
-    },
-    {
-      id: "102",
-      name: "Ananya Sharma",
-      phone: "+91 8877665544",
-      time: "11:15 AM",
-      status: "BOOKED",
-      type: "Follow-up",
-    },
-    {
-      id: "103",
-      name: "Rahul Verma",
-      phone: "+91 7766554433",
-      time: "12:00 PM",
-      status: "COMPLETED",
-      type: "First Visit",
-    },
-    {
-      id: "104",
-      name: "Suman Das",
-      phone: "+91 9988776655",
-      time: "01:30 PM",
-      status: "BOOKED",
-      type: "Consultation",
-    },
-    {
-      id: "105",
-      name: "Priya Rai",
-      phone: "+91 9432156789",
-      time: "02:15 PM",
-      status: "BOOKED",
-      type: "Follow-up",
-    },
-    {
-      id: "106",
-      name: "Amit Kumar",
-      phone: "+91 7002123456",
-      time: "03:00 PM",
-      status: "BOOKED",
-      type: "First Visit",
-    },
-  ]);
+  const dispatch = useDispatch();
 
-  // Logic for Search and Pagination
-  const filteredData = appointments.filter(
-    (appt) =>
-      appt.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      appt.phone.includes(searchQuery)
+  // Get data from Redux
+  const { items: appointments, loading } = useSelector(
+    (state) => state.appointments
   );
+
+  // 1. Fetch appointments when filter or search changes
+  useEffect(() => {
+    const params = {};
+    if (activeFilter === "today") params.date = "today";
+    if (searchQuery) params.search = searchQuery;
+    dispatch(fetchAppointments(params));
+  }, [dispatch, activeFilter, searchQuery]);
+
+  // 2. Logic for Search and Pagination
+  const filteredData = useMemo(() => {
+    return (appointments || []).filter(
+      (appt) =>
+        appt.patient_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        appt.patient_phone.includes(searchQuery)
+    );
+  }, [appointments, searchQuery]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const paginatedData = filteredData.slice(
@@ -85,32 +55,18 @@ export default function Appointments() {
     currentPage * itemsPerPage
   );
 
-  const toggleStatus = (id) => {
-    setAppointments((prev) =>
-      prev.map((appt) =>
-        appt.id === id
-          ? {
-              ...appt,
-              status: appt.status === "COMPLETED" ? "BOOKED" : "COMPLETED",
-            }
-          : appt
-      )
-    );
+  // 3. Updated toggleStatus to use current status from data
+  const toggleStatus = (id, currentStatus) => {
+    const nextStatus = currentStatus === "COMPLETED" ? "BOOKED" : "COMPLETED";
+    dispatch(updateStatus({ id, status: nextStatus }));
   };
 
-  const handleAddWalkIn = (newPatient) => {
-    const newEntry = {
-      id: Date.now().toString(), // Temporary ID
-      ...newPatient,
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      status: "BOOKED",
-    };
-
-    // Update local state (in Phase 2, this will be an API call)
-    setAppointments([newEntry, ...appointments]);
+  // 4. Handle Walk-in (Usually involves an API call, then refresh)
+  const handleAddWalkIn = async (newPatient) => {
+    // In production, you'd dispatch a 'createAppointment' thunk here
+    // For now, we close the modal and refresh the list
+    setIsWalkInOpen(false);
+    dispatch(fetchAppointments({ date: activeFilter }));
   };
 
   return (
@@ -122,13 +78,12 @@ export default function Appointments() {
             Daily Schedule
           </h1>
           <p className="text-gray-500 text-sm font-medium">
-            Monitoring {appointments.length} total sessions
+            {loading
+              ? "Updating..."
+              : `Monitoring ${appointments.length} total sessions`}
           </p>
         </div>
         <div className="flex gap-3">
-          {/* <button className="p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/5 text-gray-500 hover:text-blue-600 transition-all shadow-sm">
-            <Download size={20} />
-          </button> */}
           <button
             onClick={() => setIsWalkInOpen(true)}
             className="px-6 py-3 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all"
@@ -144,7 +99,10 @@ export default function Appointments() {
           {["Yesterday", "Today", "Tomorrow"].map((f) => (
             <button
               key={f}
-              onClick={() => setActiveFilter(f.toLowerCase())}
+              onClick={() => {
+                setActiveFilter(f.toLowerCase());
+                setCurrentPage(1); // Reset to page 1 on filter change
+              }}
               className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
                 activeFilter === f.toLowerCase()
                   ? "bg-blue-600 text-white"
@@ -165,7 +123,10 @@ export default function Appointments() {
             type="text"
             placeholder="Search patient or phone..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1); // Reset to page 1 on search
+            }}
             className="w-full pl-12 pr-6 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border-transparent focus:border-blue-600/30 outline-none dark:text-white text-sm font-medium transition-all"
           />
         </div>
@@ -192,7 +153,7 @@ export default function Appointments() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-white/5">
-              <AnimatePresence mode="wait">
+              <AnimatePresence mode="popLayout">
                 {paginatedData.map((appt) => (
                   <motion.tr
                     key={appt.id}
@@ -204,14 +165,14 @@ export default function Appointments() {
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-xl bg-blue-600/10 text-blue-600 flex items-center justify-center font-bold text-sm">
-                          {appt.name.charAt(0)}
+                          {appt.patient_name.charAt(0)}
                         </div>
                         <div>
                           <p className="font-black text-gray-900 dark:text-white">
-                            {appt.name}
+                            {appt.patient_name}
                           </p>
                           <p className="text-xs text-gray-400 font-medium">
-                            {appt.phone}
+                            {appt.patient_phone}
                           </p>
                         </div>
                       </div>
@@ -220,7 +181,13 @@ export default function Appointments() {
                       <div className="flex flex-col">
                         <span className="flex items-center gap-1.5 text-sm font-bold text-gray-700 dark:text-gray-300">
                           <Clock size={14} className="text-blue-500" />{" "}
-                          {appt.time}
+                          {new Date(appt.appointment_time).toLocaleTimeString(
+                            [],
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}
                         </span>
                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-1">
                           {appt.type}
@@ -241,7 +208,7 @@ export default function Appointments() {
                     <td className="px-8 py-6 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => toggleStatus(appt.id)}
+                          onClick={() => toggleStatus(appt.id, appt.status)}
                           className={`p-2.5 rounded-xl transition-all ${
                             appt.status === "COMPLETED"
                               ? "bg-green-500 text-white shadow-lg shadow-green-500/20"
@@ -267,7 +234,9 @@ export default function Appointments() {
           <p className="text-xs font-bold text-gray-500">
             Showing{" "}
             <span className="text-gray-900 dark:text-white">
-              {(currentPage - 1) * itemsPerPage + 1}
+              {filteredData.length === 0
+                ? 0
+                : (currentPage - 1) * itemsPerPage + 1}
             </span>{" "}
             to{" "}
             <span className="text-gray-900 dark:text-white">
@@ -285,7 +254,7 @@ export default function Appointments() {
             </button>
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
+              disabled={currentPage === totalPages || totalPages === 0}
               className="p-2 rounded-lg border border-gray-200 dark:border-white/10 disabled:opacity-30 dark:text-white"
             >
               <ChevronRight size={18} />

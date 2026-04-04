@@ -1,7 +1,9 @@
-import { Controller, Post, UseGuards, Req, Get, Body } from '@nestjs/common';
+import { Controller, Post, UseGuards, Req, Get, Body, Query, Patch, Param } from '@nestjs/common';
 import { AppointmentService } from './appointment.service';
 import { JwtAuthGuard } from 'src/common/guards/jwt/jwt.guard';
 import { CreateAppointmentDto } from 'src/dto/create-appointment.dto';
+import { GetAppointmentsDto } from 'src/dto/get-appointment.dto';
+import { UpdateStatusDto } from 'src/dto/update-status.dto';
 
 @Controller('appointments')
 export class AppointmentController {
@@ -11,6 +13,19 @@ export class AppointmentController {
   @Post()
   create(@Body() body: CreateAppointmentDto, @Req() req: any) {
     return this.appointmentService.create(body, req.user.clinic_id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  getAppointments(@Query() query: GetAppointmentsDto, @Req() req) {
+    const clinic_id = req.user.clinic_id; // from JWT
+    return this.appointmentService.getAppointments(query, clinic_id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/status')
+  updateStatus(@Param('id') id: string, @Body() body: UpdateStatusDto) {
+    return this.appointmentService.updateStatus(id, body);
   }
 
   @UseGuards(JwtAuthGuard)
