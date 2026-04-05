@@ -9,13 +9,14 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  Filter,
+  Trash2,
 } from "lucide-react";
 import WalkInModal from "../components/WalkInModal";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchAppointments,
   updateStatus,
+  deleteAppointment
 } from "../apiHandler/authApiHandler/appointmentSlice";
 
 export default function Appointments() {
@@ -58,6 +59,21 @@ export default function Appointments() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  const handleDelete = async (id) => {
+    console.log("Value of id while deleting 1 ", id);
+    if (window.confirm("Are you sure you want to delete this appointment?")) {
+      try {
+        console.log("Value of id while deleting 2", id);
+        await dispatch(deleteAppointment(id))
+        // The Redux slice should ideally filter out the deleted ID from 'items'
+        // automatically, but if not, you can re-fetch:
+        // dispatch(fetchAppointments({ date: activeFilter }));
+      } catch (error) {
+        alert("Failed to delete appointment");
+      }
+    }
+  };
 
   // 3. Updated toggleStatus to use current status from data
   const toggleStatus = (id, currentStatus) => {
@@ -223,6 +239,12 @@ export default function Appointments() {
                         </button>
                         <button className="p-2.5 rounded-xl bg-gray-50 dark:bg-white/5 text-gray-400 hover:text-blue-600 transition-all">
                           <MessageSquare size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(appt.id)}
+                          className="p-2.5 rounded-xl bg-gray-50 dark:bg-white/5 text-gray-400 hover:bg-red-500 hover:text-white transition-all"
+                        >
+                          <Trash2 size={18} />
                         </button>
                       </div>
                     </td>

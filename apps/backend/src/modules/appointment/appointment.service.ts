@@ -113,4 +113,14 @@ export class AppointmentService {
 
     return this.appointmentRepo.save(appointment);
   }
+
+  async deleteAppointment(id: string) {
+    const result = await this.appointmentRepo.delete(id);
+
+    if (result.affected === 0) {
+      throw new Error('Appointment Not found');
+    }
+
+    return { message: 'Deleted Successfully' };
+  }
 }

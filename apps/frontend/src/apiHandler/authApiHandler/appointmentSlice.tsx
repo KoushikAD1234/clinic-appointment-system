@@ -25,6 +25,21 @@ export const updateStatus = createAsyncThunk(
   }
 );
 
+export const deleteAppointment = createAsyncThunk(
+  "appointments/delete",
+  async (id: string, thunkAPI) => {
+    try {
+      console.log("Thunk received id:", id); // debug
+
+      await api.delete(`/appointments/${id}`);
+
+      return id;
+    } catch (err: any) {
+      return thunkAPI.rejectWithValue(err.response?.data);
+    }
+  }
+);
+
 const appointmentSlice = createSlice({
   name: "appointments", // Changed to plural to match your store/useSelector
   initialState: {
@@ -45,6 +60,9 @@ const appointmentSlice = createSlice({
       .addCase(fetchAppointments.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(deleteAppointment.fulfilled, (state, action) => {
+        state.items = state.items.filter((itr) => itr.id !== action.payload)
       })
       .addCase(updateStatus.fulfilled, (state, action) => {
         // This logic is correct!

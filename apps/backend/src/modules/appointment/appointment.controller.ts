@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Req, Get, Body, Query, Patch, Param } from '@nestjs/common';
+import { Controller, Post, UseGuards, Req, Get, Body, Query, Patch, Param, Delete } from '@nestjs/common';
 import { AppointmentService } from './appointment.service';
 import { JwtAuthGuard } from 'src/common/guards/jwt/jwt.guard';
 import { CreateAppointmentDto } from 'src/dto/create-appointment.dto';
@@ -26,6 +26,12 @@ export class AppointmentController {
   @Patch(':id/status')
   updateStatus(@Param('id') id: string, @Body() body: UpdateStatusDto) {
     return this.appointmentService.updateStatus(id, body);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id')
+  deleteAppointment(@Param('id') id: string) {
+    return this.appointmentService.deleteAppointment(id);
   }
 
   @UseGuards(JwtAuthGuard)
