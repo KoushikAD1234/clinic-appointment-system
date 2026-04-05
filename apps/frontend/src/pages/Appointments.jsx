@@ -15,10 +15,12 @@ import WalkInModal from "../components/WalkInModal";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchAppointments,
+  createAppointments,
   updateStatus,
-  deleteAppointment
+  deleteAppointment,
 } from "../apiHandler/authApiHandler/appointmentSlice";
 import PatientDetailsModal from "../components/PatientDetailsModal";
+import { createPatient, getPatientByPhone } from "../apiHandler/authApiHandler/patientSlice";
 
 export default function Appointments() {
   const [activeFilter, setActiveFilter] = useState("today");
@@ -84,12 +86,61 @@ export default function Appointments() {
     dispatch(updateStatus({ id, status: nextStatus }));
   };
 
+  const { user } = useSelector((state) => state.auth);
+
   // 4. Handle Walk-in (Usually involves an API call, then refresh)
   const handleAddWalkIn = async (newPatient) => {
-    // In production, you'd dispatch a 'createAppointment' thunk here
-    // For now, we close the modal and refresh the list
-    setIsWalkInOpen(false);
-    dispatch(fetchAppointments({ date: activeFilter }));
+    console.log("USER:", user);
+    console.log("DOCTOR ID:", user?.id);
+    try {
+      const appointment_time = new Date(
+        `${newPatient.appointment_date}T${newPatient.appointment_time}`
+      ).toISOString();
+
+      const typeMap = {
+        "First Visit": "FIRST_VISIT",
+        "Follow-up": "FOLLOW_UP",
+        Emergency: "CONSULTATION",
+      };
+
+      let patientId;
+
+      const existingPatient = await dispatch(
+        getPatientByPhone(newPatient.phone)
+      ).unwrap();
+
+      if (existingPatient?.id) {
+        patientId = existingPatient.id;
+      } else {
+        const createdPatient = await dispatch(
+          createPatient({
+            name: newPatient.name,
+            phone: newPatient.phone,
+            age: newPatient.age,
+            gender: newPatient.gender,
+            address: newPatient.address,
+          })
+        ).unwrap();
+
+        patientId = createdPatient.id;
+      }
+
+      await dispatch(
+        createAppointments({
+          patient_id: patientId,
+          doctor_id: user?.id,
+          patient_name: newPatient.name,
+          patient_phone: newPatient.phone,
+          appointment_time,
+          type: typeMap[newPatient.type],
+        })
+      ).unwrap();
+
+      setIsWalkInOpen(false);
+      dispatch(fetchAppointments({ date: activeFilter }));
+    } catch (err) {
+      console.error("Walk-in failed:", err);
+    }
   };
 
   // Function to open the details

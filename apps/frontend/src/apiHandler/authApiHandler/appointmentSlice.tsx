@@ -13,6 +13,18 @@ export const fetchAppointments = createAsyncThunk(
   }
 );
 
+export const createAppointments = createAsyncThunk(
+    "appointments/createAppointments",
+    async(data, thunkAPI) => {
+        try {
+            const res = await api.post('/appointments', data);
+            return res.data;
+        } catch(err) {
+            return thunkAPI.rejectWithValue(err.response?.data);
+        }
+    }
+)
+
 export const updateStatus = createAsyncThunk(
   "appointments/updateStatus",
   async ({ id, status }, { rejectWithValue }) => {

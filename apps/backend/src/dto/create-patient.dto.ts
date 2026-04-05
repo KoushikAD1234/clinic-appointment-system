@@ -44,4 +44,8 @@ export class CreatePatientDto {
   @IsOptional()
   @IsString()
   email?: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Name is required' })
+  address?: string;
 }

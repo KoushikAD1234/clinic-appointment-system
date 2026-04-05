@@ -19,4 +19,7 @@ export class Patient {
 
   @Column()
   phone: string;
+
+  @Column()
+  address: string;
 }

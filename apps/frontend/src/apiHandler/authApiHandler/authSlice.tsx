@@ -1,6 +1,23 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../services/api";
 import { AxiosError } from "axios";
+import { jwtDecode } from "jwt-decode";
+
+let user = null;
+const token = localStorage.getItem('access_token');
+
+if(token) {
+  try {
+    const decoded = jwtDecode(token);
+    user = {
+      id: decoded.userId,
+      email: decoded.email,
+      clinic_id: decoded.clinic_id,
+    };
+  } catch(err) {
+    console.log("Invalid token ", err);
+  }
+}
 
 // REGISTER
 export const registerUser = createAsyncThunk(
@@ -69,7 +86,7 @@ export const resetPassword = createAsyncThunk(
 const authSlice = createSlice({
   name: "auth",
   initialState: {
-    user: null,
+    user,
     access_token: localStorage.getItem("access_token") || null,
     loading: false,
     error: null,
@@ -112,11 +129,21 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
-        state.access_token = action.payload.access_token;
-        state.message = "Registration successful";
 
-        localStorage.setItem("access_token", action.payload.access_token);
+        const token = action.payload.access_token;
+
+        state.access_token = token;
+
+        // decode token
+        const decoded = jwtDecode(token);
+
+        state.user = {
+          id: decoded.userId,
+          email: decoded.email,
+          clinic_id: decoded.clinic_id,
+        };
+
+        localStorage.setItem("access_token", token);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
