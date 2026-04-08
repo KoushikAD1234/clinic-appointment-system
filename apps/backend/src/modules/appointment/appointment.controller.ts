@@ -12,14 +12,18 @@ export class AppointmentController {
   @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() body: CreateAppointmentDto, @Req() req: any) {
-    return this.appointmentService.create(body, req.user.clinic_id);
+    // return this.appointmentService.create(body, req.user.clinic_id);
+    console.log('Logged in doctor create section:', req.user.id);
+    return this.appointmentService.create(body, req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get()
   getAppointments(@Query() query: GetAppointmentsDto, @Req() req) {
-    const clinic_id = req.user.clinic_id; // from JWT
-    return this.appointmentService.getAppointments(query, clinic_id);
+    // const clinic_id = req.user.id; // from JWT
+    console.log('Logged in doctor get section:', req.user.id);
+    const doctor_id = req.user.id;
+    return this.appointmentService.getAppointments(query, doctor_id);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -37,6 +41,7 @@ export class AppointmentController {
   @UseGuards(JwtAuthGuard)
   @Get()
   findAll(@Req() req: any) {
-    return this.appointmentService.findAll(req.user.clinic_id);
+    // return this.appointmentService.findAll(req.user.clinic_id);
+    return this.appointmentService.findAll(req.user.id);
   }
 }

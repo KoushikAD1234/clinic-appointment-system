@@ -14,7 +14,7 @@ export enum AppointmentStatus {
 export enum AppointmentType {
   FIRST_VISIT = 'FIRST_VISIT',
   FOLLOW_UP = 'FOLLOW_UP',
-  CONSULTATION = 'CONSULTATION', // ✅ added
+  CONSULTATION = 'CONSULTATION',
 }
 
 @Entity()

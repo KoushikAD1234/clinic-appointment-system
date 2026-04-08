@@ -13,30 +13,32 @@ export class AppointmentService {
     private appointmentRepo: Repository<Appointment>,
   ) {}
 
-  async create(body: CreateAppointmentDto, clinic_id: string) {
+  async create(body: CreateAppointmentDto, doctor_id: string) {
     const appointment = this.appointmentRepo.create({
       ...body,
-      clinic_id,
+      doctor_id,
+      clinic_id: 'default-clinic',
       appointment_time: new Date(body.appointment_time),
     });
     try {
       return await this.appointmentRepo.save(appointment);
     } catch (error) {
+      console.log('Error in create appointment:', error);
       throw new BadRequestException('Slot already booked');
     }
   }
 
-  async findAll(clinic_id: string) {
+  async findAll(doctor_id: string) {
     return this.appointmentRepo.find({
-      where: { clinic_id },
+      where: { doctor_id },
       order: { appointment_time: 'ASC' },
     });
   }
 
-  async getAppointments(query: GetAppointmentsDto, clinic_id: string) {
-    const where: any = { clinic_id };
+  async getAppointments(query: GetAppointmentsDto, doctor_id: string) {
+    const where: any = { doctor_id };
 
-    // 📅 DATE FILTER
+    // DATE FILTER
     if (query.date) {
       const now = new Date();
 
@@ -78,7 +80,7 @@ export class AppointmentService {
       }
     }
 
-    // 🔍 SEARCH + DATE TOGETHER
+    // SEARCH + DATE TOGETHER
     if (query.search) {
       return this.appointmentRepo.find({
         where: [
@@ -95,7 +97,7 @@ export class AppointmentService {
       });
     }
 
-    // 🟢 DEFAULT
+    // DEFAULT
     return this.appointmentRepo.find({
       where,
       order: { appointment_time: 'ASC' },
