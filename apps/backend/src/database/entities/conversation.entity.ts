@@ -3,10 +3,12 @@ import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 export enum ConversationStep {
   START = 'START',
   ASK_NAME = 'ASK_NAME',
-  ASK_GENDER = 'ASK_GENDER',
-  ASK_DATE = 'ASK_DATE',
   ASK_AGE = 'ASK_AGE',
+  ASK_ADDRESS = 'ASK_ADDRESS',
+  ASK_TYPE = 'ASK_TYPE',
+  ASK_GENDER = 'ASK_GENDER',
   ASK_DOCTOR = 'ASK_DOCTOR',
+  ASK_DATE = 'ASK_DATE',
   ASK_TIME = 'ASK_TIME',
   CONFIRM = 'CONFIRM',
 }
@@ -36,10 +38,16 @@ export class Conversation {
   gender: string;
 
   @Column({ nullable: true })
+  address: string;
+
+  @Column({ nullable: true })
   doctor_id: string;
 
   @Column({ nullable: true })
   appointment_time: string;
+
+  @Column({ nullable: true })
+  type: string;
 
   @Column({ nullable: true })
   appointment_date: string;

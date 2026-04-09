@@ -199,8 +199,8 @@ export default function PatientDetailsModal({
                       }
                       className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-white/5 border-transparent focus:border-blue-600/30 outline-none dark:text-white text-xs font-black uppercase tracking-widest appearance-none disabled:opacity-50 transition-all"
                     >
-                      <option value="First Visit">First Visit</option>
-                      <option value="Follow-up">Follow-up</option>
+                      <option value="FIRST_VISIT">First Visit</option>
+                      <option value="FOLLOW_UP">Follow-up</option>
                       <option value="Walk-in">Walk-in</option>
                     </select>
                   </div>

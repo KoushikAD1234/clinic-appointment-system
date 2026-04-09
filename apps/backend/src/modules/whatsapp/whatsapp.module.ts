@@ -6,6 +6,9 @@ import { Conversation } from 'src/database/entities/conversation.entity';
 import { AppointmentModule } from '../appointment/appointment.module';
 import { Patient } from 'src/database/entities/patient.entity';
 import { Doctor } from 'src/database/entities/doctor.entity';
+import { WhatsappSender } from './whatsapp.sender';
+import { ConversationHandler } from './conversation.handler';
+import { ConversationService } from './conversation.service';
 
 @Module({
   imports: [
@@ -13,6 +16,11 @@ import { Doctor } from 'src/database/entities/doctor.entity';
     AppointmentModule,
   ],
   controllers: [WhatsappController],
-  providers: [WhatsappService],
+  providers: [
+    WhatsappService,
+    WhatsappSender,
+    ConversationService,
+    ConversationHandler,
+  ],
 })
 export class WhatsappModule {}
