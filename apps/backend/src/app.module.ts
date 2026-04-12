@@ -31,14 +31,18 @@ import { DoctorModule } from './modules/doctor/doctor.module';
     // Database Connection: Configuring it for the entire Application.
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT),
-      username: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
+      url: process.env.DB_URL,
+      // host: process.env.DB_HOST,
+      // port: Number(process.env.DB_PORT),
+      // username: process.env.DB_USER,
+      // password: process.env.DB_PASSWORD,
+      // database: process.env.DB_NAME,
       autoLoadEntities: true,
       entities: [Doctor, Patient, Appointment],
       synchronize: true,
+      ssl: {
+        rejectUnauthorized: false,
+      },
     }),
     AuthModule,
     PatientModule,
@@ -51,7 +55,7 @@ import { DoctorModule } from './modules/doctor/doctor.module';
 export class AppModule {
   // Depecdency Injector: This is more specifically constructor injection.
   constructor(private configService: ConfigService) {
-    console.log('ENV CHECK:', this.configService.get('DB_HOST'));
+    // console.log('ENV CHECK:', this.configService.get('DB_HOST'));
     console.log('CWD:', process.cwd()); //process.cwd() used to getting the current directory you are in.
   }
 }
