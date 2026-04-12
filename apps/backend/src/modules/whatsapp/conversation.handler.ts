@@ -28,54 +28,64 @@ export class ConversationHandler {
     TYPE: 'HXb6d1741ef55eb9e87c23bca6beeb697f',
     DATE: 'HX7d85c71075861689217a12b5311e2313',
     CONFIRMATION: 'HX0872f7f1e15d83507b13558009f92cca',
-    DOCTOR_LIST: 'HX2911e7d49281591c256bbdd69e2a1321',
   };
 
   async handle(convo: Conversation, message: string): Promise<string | null> {
     const msg = message.trim();
     const entry = parseEntryMessage(msg);
 
-    console.log('RAW MESSAGE:', message);
-    console.log('PARSED ENTRY:', entry);
+    // 1. GLOBAL CANCEL / RESET
+    if (msg.toLowerCase() === 'cancel' || msg.toLowerCase() === 'reset') {
+      await this.convoService.delete(convo.phone);
+      return '🔄 Session cleared. To start a new booking, please scan the QR code or click the WhatsApp link for your specific doctor.';
+    }
 
-    // HANDLE QR ENTRY
-    if (entry.type === 'DOCTOR_DIRECT' && !convo.doctor_id) {
+    // 2. HANDLE QR ENTRY (The only way to start/restart a valid session)
+    if (entry.type === 'DOCTOR_DIRECT') {
       const doctor = await this.doctorRepo.findOne({
         where: { id: entry.doctorId },
       });
 
-      console.log('Value of doctor_id ', entry.doctorId);
-      console.log('Value of Doctor is ', doctor);
-
       if (!doctor) {
-        return '❌ Invalid doctor. Please try again.';
+        return '❌ Invalid doctor link. Please scan a valid QR code from the clinic.';
       }
 
-      console.log('Saving doctor_id:', doctor.id);
+      // We reset/update the conversation to the new doctor and start from Name
+      convo.doctor_id = doctor.id;
+      convo.step = ConversationStep.ASK_NAME;
+      // Optional: Clear old patient data if you want a fresh start
+      convo.name = '';
+      await this.convoService.save(convo);
 
-      await this.convoService.save({
-        ...convo,
-        doctor_id: doctor.id,
-        step: ConversationStep.ASK_NAME,
-      });
-
-      return `👨‍⚕️ Booking with Dr. ${doctor.name}\n\nPlease enter your name`;
+      return `👨‍⚕️ Booking an appointment with *Dr. ${doctor.name}*\n\nPlease enter your *Full Name*:`;
     }
 
+    // 3. QR-FIRST GUARD: If no doctor is associated, block any further interaction
+    if (!convo.doctor_id) {
+      return '👋 Welcome! To book an appointment, please **scan the QR code** or **click the WhatsApp link** provided by your doctor to begin.';
+    }
+
+    // 4. MAIN BOOKING FLOW
     switch (convo.step) {
       case ConversationStep.ASK_NAME:
+        if (msg.length < 2)
+          return '⚠️ Please enter a valid name (at least 2 characters).';
         convo.name = msg;
         convo.step = ConversationStep.ASK_AGE;
         await this.convoService.save(convo);
         return 'What is your age?';
 
       case ConversationStep.ASK_AGE:
-        convo.age = parseInt(msg) || 0;
+        const age = parseInt(msg);
+        if (isNaN(age) || age < 0 || age > 120)
+          return '⚠️ Please enter a valid age.';
+        convo.age = age;
         convo.step = ConversationStep.ASK_ADDRESS;
         await this.convoService.save(convo);
         return 'What is your address?';
 
       case ConversationStep.ASK_ADDRESS:
+        if (msg.length < 5) return '⚠️ Please provide a more detailed address.';
         convo.address = msg;
         convo.step = ConversationStep.ASK_TYPE;
         await this.convoService.save(convo);
@@ -92,88 +102,42 @@ export class ConversationHandler {
         await this.sender.sendTemplate(convo.phone, this.TEMPLATES.GENDER);
         return null;
 
-      case ConversationStep.ASK_GENDER: {
+      case ConversationStep.ASK_GENDER:
         convo.gender =
           msg === '1' || msg.toLowerCase() === 'male' ? 'Male' : 'Female';
-
-        console.log('Doctor ID at ASK_GENDER:', convo.doctor_id);
-
-        // 🔥 Skip doctor selection if already set
-        if (convo.doctor_id && convo.doctor_id !== '') {
-          convo.step = ConversationStep.ASK_DATE;
-          await this.convoService.save(convo);
-
-          await this.sender.sendTemplate(convo.phone, this.TEMPLATES.DATE);
-          return null;
-        }
-
-        const doctors = await this.doctorRepo.find({
-          where: { clinic_id: 'default-clinic' },
-        });
-
-        if (doctors.length === 0) {
-          return "I'm sorry, there are no doctors available at this clinic right now.";
-        }
-
-        convo.step = ConversationStep.ASK_DOCTOR;
-        await this.convoService.save(convo);
-
-        await this.sender.sendDoctorList(
-          convo.phone,
-          this.TEMPLATES.DOCTOR_LIST,
-          doctors,
-        );
-
-        return null;
-      }
-
-      case ConversationStep.ASK_DOCTOR: {
-        const doctorsList = await this.doctorRepo.find({
-          where: { clinic_id: 'default-clinic' },
-        });
-
-        const incomingMsg = msg.trim(); // This is the ID "37c7a979..."
-
-        // Check if the message matches a Doctor's ID OR their Name
-        const selected = doctorsList.find((d) => {
-          return (
-            d.id === incomingMsg ||
-            d.name.toLowerCase() === incomingMsg.toLowerCase()
-          );
-        });
-
-        if (!selected) {
-          console.log(`❌ No match found for: "${incomingMsg}"`);
-          // Send list again if no match
-          await this.sender.sendDoctorList(
-            convo.phone,
-            this.TEMPLATES.DOCTOR_LIST,
-            doctorsList,
-          );
-          return null;
-        }
-
-        // ✅ Success!
-        console.log(`✅ Selected Doctor: ${selected.name}`);
-        convo.doctor_id = selected.id;
         convo.step = ConversationStep.ASK_DATE;
         await this.convoService.save(convo);
-
-        // Send the Date template
         await this.sender.sendTemplate(convo.phone, this.TEMPLATES.DATE);
         return null;
-      }
 
       case ConversationStep.ASK_DATE: {
         const date = this.getDate(msg);
-        if (!date) return 'Please tap one of the date buttons below.';
+        if (!date)
+          return '⚠️ Invalid selection. Please tap one of the buttons below.';
         convo.appointment_date = date;
         convo.step = ConversationStep.ASK_TIME;
         await this.convoService.save(convo);
-        return 'Enter time in 24 hrs format (e.g., 10:30 or 22:20)';
+        return 'Enter appointment time (24h format, e.g., 10:30 or 15:00):';
       }
 
-      case ConversationStep.ASK_TIME:
+      case ConversationStep.ASK_TIME: {
+        const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+        if (!timeRegex.test(msg))
+          return '⚠️ Please use HH:MM format (e.g., 14:30).';
+
+        // Check for past time if appointment is today
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (convo.appointment_date === todayStr) {
+          const [hrs, mins] = msg.split(':').map(Number);
+          const now = new Date();
+          if (
+            hrs < now.getHours() ||
+            (hrs === now.getHours() && mins < now.getMinutes())
+          ) {
+            return '⚠️ That time has already passed today. Please pick a future time.';
+          }
+        }
+
         convo.appointment_time = `${convo.appointment_date}T${msg}:00`;
         convo.step = ConversationStep.CONFIRM;
         await this.convoService.save(convo);
@@ -182,17 +146,17 @@ export class ConversationHandler {
           this.TEMPLATES.CONFIRMATION,
         );
         return null;
+      }
 
       case ConversationStep.CONFIRM:
-        // Checking for "No" or digit "2"
         if (msg === '2' || msg.toLowerCase().includes('no')) {
           await this.convoService.delete(convo.phone);
-          return 'Booking cancelled. Type "Hi" to start again.';
+          return '❌ Booking cancelled. To restart, please scan the doctor’s QR code again.';
         }
         return this.book(convo);
 
       default:
-        return 'Type "Hi" to start a new clinic appointment booking.';
+        return 'Type "Cancel" to stop or provide the information requested above.';
     }
   }
 
@@ -230,7 +194,7 @@ export class ConversationHandler {
       return '✅ Appointment successfully booked! We look forward to seeing you.';
     } catch (err) {
       console.error(err);
-      return '❌ That time slot is no longer available. Please try a different time.';
+      return '❌ This time slot was just taken. Please type "Cancel" and scan the QR code to try another time.';
     }
   }
 

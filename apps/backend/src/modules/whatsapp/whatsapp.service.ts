@@ -15,17 +15,16 @@ export class WhatsappService {
     const from = body.From;
     const message = body.Body?.trim() ?? '';
 
-    let { convo, isNew } = await this.convoService.getOrCreate(from);
+    // 1. Get the existing conversation or create a shell for a new one
+    let { convo } = await this.convoService.getOrCreate(from);
 
-    // 🔥 ALWAYS call the handler first to check for special entry commands (like QR codes)
-    let reply = await this.handler.handle(convo, message);
+    // 2. Delegate all logic to the handler.
+    // The handler now checks if a doctor_id exists.
+    // If not, it returns the "Please scan QR" message automatically.
+    const reply = await this.handler.handle(convo, message);
 
-    // If the handler didn't return a specific response (and it's a fresh session),
-    // then fallback to the default greeting.
-    if (!reply && isNew) {
-      reply = "Hi! What's your name?";
-    }
-
+    // 3. Send the reply if the handler generated one
+    // (Handler returns null if it sent a Twilio Template instead)
     if (reply !== null) {
       await this.sender.sendMessage(from, reply);
     }
