@@ -1,4 +1,4 @@
-# CarePlus: Enterprise Clinic Management & WhatsApp Automation
+# CarePlus: Enterprise Clinic Management & WhatsApp Automation [MVP]
 
 **CarePlus** is a professional-grade SaaS ecosystem engineered to modernize the operational workflow of private medical practices. By replacing manual front-desk tasks with a **state-machine-driven WhatsApp bot** and a high-performance **React administrative core**, it streamlines the entire patient lifecycle from discovery to consultation.
 
